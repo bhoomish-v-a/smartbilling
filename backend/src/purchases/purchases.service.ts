@@ -4,13 +4,9 @@ import { CreatePurchaseDto } from './dto/create-purchase.dto';
 
 @Injectable()
 export class PurchasesService {
-  constructor(
-    private readonly prisma: PrismaService,
-  ) {}
+  constructor(private readonly prisma: PrismaService) {}
 
-  async create(
-    createPurchaseDto: CreatePurchaseDto,
-  ) {
+  async create(createPurchaseDto: CreatePurchaseDto) {
     return this.prisma.purchase.create({
       data: {
         productId: createPurchaseDto.productId,

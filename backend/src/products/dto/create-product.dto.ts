@@ -1,9 +1,4 @@
-import {
-  IsString,
-  IsNumber,
-  Min,
-  IsEnum,
-} from 'class-validator';
+import { IsString, IsNumber, Min, IsEnum, IsOptional } from 'class-validator';
 
 import { PurchaseType } from '@prisma/client';
 
@@ -11,8 +6,9 @@ export class CreateProductDto {
   @IsString()
   name: string;
 
+  @IsOptional()
   @IsString()
-  category: string;
+  categoryId?: string;
 
   @IsNumber()
   @Min(0)

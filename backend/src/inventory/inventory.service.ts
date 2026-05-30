@@ -3,97 +3,73 @@ import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class InventoryService {
-  constructor(
-    private readonly prisma: PrismaService,
-  ) {}
+  constructor(private readonly prisma: PrismaService) {}
 
+  async getAllStock() {
+    const result = await this.prisma.$queryRawUnsafe<
+      {
+        productId: string;
+        productName: string;
+        purchased: bigint;
+        sold: bigint;
+        available: bigint;
+      }[]
+    >(
+      `SELECT
+        p."id" AS "productId",
+        p."name" AS "productName",
+        COALESCE(pur."purchased", 0) AS "purchased",
+        COALESCE(s."sold", 0) AS "sold",
+        COALESCE(pur."purchased", 0) - COALESCE(s."sold", 0) AS "available"
+      FROM "Product" p
+      LEFT JOIN (
+        SELECT "productId", SUM("quantity")::BIGINT AS "purchased"
+        FROM "Purchase"
+        GROUP BY "productId"
+      ) pur ON pur."productId" = p."id"
+      LEFT JOIN (
+        SELECT "productId", SUM("quantity")::BIGINT AS "sold"
+        FROM "InvoiceItem"
+        GROUP BY "productId"
+      ) s ON s."productId" = p."id"
+      ORDER BY p."name"`,
+    );
 
-
-async getAllStock() {
-  const products =
-    await this.prisma.product.findMany();
-
-  const result: {
-  productId: string;
-  productName: string;
-  purchased: number;
-  sold: number;
-  available: number;
-}[] = [];
-
-  for (const product of products) {
-    const purchases =
-      await this.prisma.purchase.aggregate({
-        _sum: {
-          quantity: true,
-        },
-        where: {
-          productId: product.id,
-        },
-      });
-
-    const sold =
-      await this.prisma.invoiceItem.aggregate({
-        _sum: {
-          quantity: true,
-        },
-        where: {
-          productId: product.id,
-        },
-      });
-
-    const purchasedQty =
-      purchases._sum.quantity ?? 0;
-
-    const soldQty =
-      sold._sum.quantity ?? 0;
-
-    result.push({
-      productId: product.id,
-      productName: product.name,
-      purchased: purchasedQty,
-      sold: soldQty,
-      available:
-        purchasedQty - soldQty,
-    });
+    return result.map((r) => ({
+      productId: r.productId,
+      productName: r.productName,
+      purchased: Number(r.purchased),
+      sold: Number(r.sold),
+      available: Number(r.available),
+    }));
   }
 
-  return result;
-}
+  async getStock(productId: string) {
+    const result = await this.prisma.$queryRawUnsafe<
+      { purchased: bigint; sold: bigint; available: bigint }[]
+    >(
+      `SELECT
+        COALESCE(pur."purchased", 0) AS "purchased",
+        COALESCE(s."sold", 0) AS "sold",
+        COALESCE(pur."purchased", 0) - COALESCE(s."sold", 0) AS "available"
+      FROM (
+        SELECT SUM("quantity")::BIGINT AS "purchased"
+        FROM "Purchase"
+        WHERE "productId" = $1
+      ) pur,
+      (
+        SELECT SUM("quantity")::BIGINT AS "sold"
+        FROM "InvoiceItem"
+        WHERE "productId" = $1
+      ) s`,
+      productId,
+    );
 
-async getStock(productId: string) {
-  const purchases =
-    await this.prisma.purchase.aggregate({
-      _sum: {
-        quantity: true,
-      },
-      where: {
-        productId,
-      },
-    });
-
-  const sold =
-    await this.prisma.invoiceItem.aggregate({
-      _sum: {
-        quantity: true,
-      },
-      where: {
-        productId,
-      },
-    });
-
-  const purchasedQty =
-    purchases._sum.quantity ?? 0;
-
-  const soldQty =
-    sold._sum.quantity ?? 0;
-
-  return {
-    productId,
-    purchased: purchasedQty,
-    sold: soldQty,
-    available:
-      purchasedQty - soldQty,
-  };
-}
+    return {
+      productId,
+      purchased: Number(result[0]?.purchased ?? 0),
+      sold: Number(result[0]?.sold ?? 0),
+      available: Number(result[0]?.available ?? 0),
+    };
+  }
 }

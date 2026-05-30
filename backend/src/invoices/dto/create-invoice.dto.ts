@@ -2,9 +2,10 @@ import {
   IsArray,
   IsOptional,
   IsString,
+  IsNumber,
+  Min,
   ValidateNested,
   IsInt,
-  Min,
 } from 'class-validator';
 
 import { Type } from 'class-transformer';
@@ -19,12 +20,25 @@ class InvoiceItemDto {
 }
 
 export class CreateInvoiceDto {
+  @IsOptional()
+  @IsString()
+  customerId?: string;
+
   @IsString()
   customerName: string;
 
   @IsOptional()
   @IsString()
   customerPhone?: string;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  discount?: number;
+
+  @IsOptional()
+  @IsString()
+  billType?: 'GST' | 'ESTIMATION';
 
   @IsArray()
   @ValidateNested({

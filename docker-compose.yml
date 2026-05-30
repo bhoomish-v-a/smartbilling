@@ -1,0 +1,48 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: smartbill
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - sb-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: "postgresql://postgres:postgres@db:5432/smartbill"
+      JWT_SECRET: "${JWT_SECRET:-change-this-in-production}"
+      JWT_EXPIRES_IN: "1d"
+      PORT: "3000"
+      CORS_ORIGIN: "http://localhost:5173"
+      NODE_ENV: "production"
+    ports:
+      - "3000:3000"
+    networks:
+      - sb-network
+    command: >
+      sh -c "cd backend && npx prisma db push --accept-data-loss && node dist/main"
+
+networks:
+  sb-network:
+    driver: bridge
+
+volumes:
+  postgres_data:

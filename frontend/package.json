@@ -16,9 +16,7 @@
     "@mui/material": "^9.0.1",
     "@mui/x-data-grid": "^9.3.0",
     "axios": "^1.16.1",
-    "class-transformer": "^0.5.1",
-    "class-validator": "^0.15.1",
-    "pdfkit": "^0.18.0",
+
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
     "react-router-dom": "^7.16.0"
@@ -26,7 +24,7 @@
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@types/node": "^24.12.3",
-    "@types/pdfkit": "^0.17.6",
+
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.1",

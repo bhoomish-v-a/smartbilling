@@ -5,15 +5,18 @@ import {
   Param,
   Post,
   Put,
+  UseGuards,
 } from '@nestjs/common';
 
 import { CompanyService } from './company.service';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../common/guards/roles.guard';
+import { Roles } from '../common/decorators/roles.decorator';
 
 @Controller('company')
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class CompanyController {
-  constructor(
-    private readonly companyService: CompanyService,
-  ) {}
+  constructor(private readonly companyService: CompanyService) {}
 
   @Get()
   findOne() {
@@ -21,22 +24,31 @@ export class CompanyController {
   }
 
   @Post()
+  @Roles('ADMIN')
   create(
-    @Body() body: any,
+    @Body()
+    body: {
+      name: string;
+      gstNumber: string;
+      phone: string;
+      address: string;
+    },
   ) {
-    return this.companyService.create(
-      body,
-    );
+    return this.companyService.create(body);
   }
 
   @Put(':id')
+  @Roles('ADMIN')
   update(
     @Param('id') id: string,
-    @Body() body: any,
+    @Body()
+    body: {
+      name?: string;
+      gstNumber?: string;
+      phone?: string;
+      address?: string;
+    },
   ) {
-    return this.companyService.update(
-      id,
-      body,
-    );
+    return this.companyService.update(id, body);
   }
 }
